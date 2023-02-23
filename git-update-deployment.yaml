@@ -5,7 +5,6 @@ metadata:
     tekton.dev/pipelines.minVersion: 0.12.1
     tekton.dev/tags: git
   name: git-update-deployment
-  namespace: workshop-int
   labels:
     app.kubernetes.io/version: "0.1"
     operator.tekton.dev/provider-type: community
