@@ -26,6 +26,7 @@ On the Create Gitea page switch to the YAML view and add the following spec valu
 
 >  ```yaml
 >  spec:
+>    ...
 >    giteaAdminUser: gitea
 >    giteaAdminPassword: "gitea"
 >    giteaAdminEmail: gitea@viada.de
@@ -34,24 +35,28 @@ On the Create Gitea page switch to the YAML view and add the following spec valu
 
 Click Create
 
+**Notice:** Please be patient for about 2 minutes until gitea is online.
+
+
 After creation has finished:
 - Access the route URL (you’ll find it e.g. in Networking > Routes > repository > Location)
 - This will take you to the Gitea web UI
 - Sign-In to Gitea with user gitea and password gitea
 - Clone the example repo:
-  - Click the + dropdown and choose New Migration
+  - Click the + dropdown on upper right corner and choose New Migration
   - As type choose Git
   - URL:  https://github.com/mcpdev80/quarkus-build-options.git
   - Click Migrate Repository
-- Click Create
   
 
 ## Create App Deployment and Build Pipeline
 After installing the Operator create a new deployment of your game-changing application:
 - Create a new OpenShift project workshop-int-userX
+  - Home > Projects right upper corner click on "Create Project"
 - Switch to the OpenShift Developer Console
+  - On the left side menu click on Administrator ther is a pulldown menu and click on Developer
 - Click the +Add menu entry to the left and choose Import from Git
-  - As Git Repo URL enter the clone URL for the quarkus-build-options repo in your your Gitea instance (There might be a warning about thie repo url that you can ignore)
+  - As Git Repo URL enter the clone URL for the quarkus-build-options repo in your your Gitea instance (There might be a warning about the repo url that you can ignore)
   - Click Show advanced Git options and for Git reference enter master
   - As Import Strategy select Builder Image
   - As Builder Image select Java and openjdk-11-el7 / Red Hat OpenJDK 11 (RHEL 7)
@@ -64,7 +69,7 @@ In the main menu left, click on Pipelines and observe how the Tekton Pipeline is
 
 ## Install OpenShift GitOps
 
-- Creat an OpenShift Project workshop-prod-userx
+- Create an OpenShift Project workshop-prod-userx
 - In the project workshop-prod-userx click on Installed Operators and then Red Hat OpenShift GitOps.
 - On the ArgoCD “tile” click on Create instance to create an ArgoCD instance in the workshop-prod-userx project.
 
@@ -76,11 +81,11 @@ In the main menu left, click on Pipelines and observe how the Tekton Pipeline is
 
 - In Gitea create a New Migration and clone the Config GitOps Repo which will be the repository that contains our GitOps infrastructure components and state
 - The URL is  https://github.com/mcpdev80/openshift-gitops-getting-started.git
+- Click on create
 
-Please change in the Repo the namespaces to your user (user1 to userx)
-2 x by app/deployment.yaml
-1 x by app/imagestream.yaml
-
+Please change the namespaces in the Repo to your user (user1 to userx). Those can be changed in the files:
+app/deployment.yaml (2x)
+and app/imagestream.yaml (1x)
 
 Have quick look at the structure of this project :
 - app - contains yamls for the deployment, service and route resources needed by our application. These will be applied to the cluster. There is also a kustomization.yaml defining that kustomize layers will be applied to all yamls
@@ -93,12 +98,12 @@ Let’s setup the project that tells ArgoCD to watch our config repo and updated
 - Give namespace workshop-prod-userx permissions to pull images from workshop-int-userx
   - On the top right click on your username and then Copy login command to copy your login token
   - On you local machine open a terminal log in with the oc command you copied
-  - Please change the user to your user
+  - Please change the userx to your user
   
 >  ```bash
 >  oc policy add-role-to-user \
->    system:image-puller system:serviceaccount:workshop-prod-user1:default \
->    --namespace=workshop-int-user1
+>    system:image-puller system:serviceaccount:workshop-prod-userx:default \
+>    --namespace=workshop-int-userx
 >  ```
 
 - Find the local ArgoCD URL by going to Networking > Routes in namespace workshop-prod-user1
@@ -128,9 +133,9 @@ Our complete prod stage is now configured and controlled though GitOps. But how 
 As we do not want to modify our original repo file we will use a tool called  [Kustomize](https://kustomize.io/) that can add incremental change layers to YAML files. Since ArgoCD permanently watches this repo it will pick up these Kustomize changes.
 
 ## Add Kustomize and Git Push Tekton Task
-Let’s add a new custom Tekton task that can update the Image tag via Kustomize after the build an then push the change to out git config repo.
+Let’s add a new custom Tekton task that can update the Image tag via Kustomize after the build and then push the change to out git config repo.
 - In the namespace workshop-int-userx switch to the Administrator Perspective and go to Pipelines > Tasks > Create Task
-- Create a new task with the following and click Create:
+- Enter the yaml from the following path and click on Create:
 https://raw.githubusercontent.com/mcpdev80/yaml/main/git-update-deployment.yaml
 
 ## Add Tekton Task to Your Pipeline
@@ -190,8 +195,8 @@ The Pipeline should now look like this. Notice that the new task runs in paralle
 >apiVersion: v1
 >metadata:
 >    name: gitea
->  annotations:
->    tekton.dev/git-0: "https://repository-git-USERX).apps.{YOUR_DOMAIN_NAME}/gitea/openshift-gitops-getting-started.git"
+>    annotations:
+>      tekton.dev/git-0: "https://repository-git-USERX.apps.{YOUR_DOMAIN_NAME}/gitea/openshift-gitops-getting-started.git"
 >data:
 >    password: Z2l0ZWE=
 >    username: Z2l0ZWE=
